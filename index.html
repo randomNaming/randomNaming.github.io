@@ -1,1 +1,1109 @@
-<h1>欢迎来到我的主页</h1>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>沪乐锦公寓系统（数据本地版）</title>
+<style>
+/* ------------------------------------------- */
+/* CSS 样式：橙色专业风格 */
+/* ------------------------------------------- */
+:root{
+  --primary:#ff7f32;     /* 主色：暖橙色 (Primary Orange) */
+  --accent:#1a73e8;      /* 强调色：专业蓝 (Accent Blue) */
+  --bg:#f8f9fa;          /* 页面背景：极浅灰 */
+  --card-bg:#fff;        /* 卡片背景：白色 */
+  --text:#333;           /* 主要文本色 */
+  --muted:#888;          /* 辅助文本色 */
+  --border:#eee;         /* 边框色 */
+  --danger:#e74c3c;      /* 危险/错误色 */
+  --ok:#24b36b;          /* 成功色 */
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.05); /* 柔和阴影 */
+}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{font-family:-apple-system,system-ui,"Microsoft Yahei",Arial;background:var(--bg);color:var(--text);line-height:1.6}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+a{text-decoration:none;color:var(--primary)}
+
+/* 头部导航 - 品牌名称放大 */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  position:sticky;top:0;left:0;z-index:90;
+  background:var(--card-bg);
+  border-bottom:1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+.brand{font-weight:900;font-size:26px;color:var(--primary);}
+.header-right{display:flex;gap:15px;align-items:center;}
+.header-link{color:var(--text);padding:8px 12px;border-radius:6px;transition:.2s;border:1px solid transparent;}
+.header-link:hover{background:var(--primary);color:#fff;}
+.header-link.accent{color:var(--accent);border-color:var(--accent);}
+
+/* 主视觉焦点图 (模拟轮播图效果) */
+#hero{
+  height:300px;
+  background:linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+             url('https://picsum.photos/1200/300?random=1') center / cover no-repeat;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;margin-bottom:20px;
+  box-shadow:var(--shadow);
+  color:white;font-size:2.5em;font-weight:bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  transition: background-image 1s;
+}
+#hero h1{margin:0;font-size:1.5em;padding:10px 20px;background:rgba(0,0,0,0.3);border-radius:8px;}
+
+/* 内容区 */
+.content{background:var(--bg);border-radius:14px;}
+.topnav{display:flex;gap:12px;flex-wrap:wrap;padding:15px 0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.tab{border:none;background:#fefefe;color:var(--text);padding:10px 18px;border-radius:8px;cursor:pointer;transition:.2s;font-weight:600;border:1px solid #ddd;}
+.tab.active,.tab:hover{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 8px rgba(255, 127, 50, 0.3);}
+.notice{background:#fff8f2;color:var(--primary);border-left:4px solid var(--primary);border-radius:6px;padding:12px 18px;margin-bottom:20px;font-weight:500;}
+
+/* 主要网格布局 */
+.grid{display:grid;grid-template-columns:3fr 1fr;gap:20px;padding-bottom:20px;}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0, 0, 0, 0.04);}
+
+/* 房源列表卡片 */
+.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:20px;}
+.item{border:1px solid #ddd;border-radius:10px;overflow:hidden;transition:transform 0.2s, box-shadow 0.2s;cursor:pointer;background:var(--card-bg);}
+.item img{width:100%;height:180px;object-fit:cover;background:#fafafa;}
+.item .b{padding:15px;}
+.price{color:var(--danger);font-weight:800;font-size:1.3em;margin:8px 0;}
+
+/* 预约/联系模块 */
+.form label{display:flex;gap:8px;align-items:center;margin:12px 0;}
+.form input,.form select,.form textarea{flex:1;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:14px;}
+.btn{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;transition:.2s;font-weight:600;}
+.btn.outline{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+.btn.danger{background:var(--danger);}
+.btn.ok{background:var(--ok);}
+.hr{height:1px;background:var(--border);margin:20px 0;}
+
+/* 弹窗和后台样式 */
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:14px;z-index:200;}
+.dbox{max-width:550px;width:100%;background:var(--card-bg);border-radius:10px;padding:25px;box-shadow:var(--shadow);}
+.admin-wrap{display:none;padding:20px;background:var(--bg);}
+.subtabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.subtab{padding:10px 15px;border:none;border-radius:6px;background:var(--border);cursor:pointer;font-weight:600;color:var(--text);}
+.subtab.active{color:#fff;background:var(--primary);}
+.panel{margin-top:20px;padding:10px;border-radius:8px;background:var(--card-bg);display:none;}
+.panel.active{display:block;}
+table{width:100%;border-collapse:collapse;margin-top:15px;}
+th,td{border:1px solid var(--border);padding:10px;text-align:left;font-size:14px;}
+th{background:#f8f9fa;font-weight:700;}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:20px;}
+.k .n{font-weight:800;color:var(--primary);font-size:24px;}
+.admin-actions button{margin-right:5px;margin-bottom:5px;font-size:13px;padding:8px 12px;}
+
+/* 电子合同预览样式 - 适用于打印 */
+#contractContent{
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-height: 500px;
+    overflow-y: auto;
+    /* 允许编辑的样式提示 */
+    border: 2px dashed var(--accent); 
+    padding: 30px;
+}
+[contenteditable="true"]#contractContent:focus {
+    border-color: var(--ok);
+    outline: none;
+    background: #f8fff8;
+}
+#contractContent h2{text-align: center; margin-bottom: 20px;}
+#contractContent p{text-indent: 2em;}
+#contractContent .term-block{border:1px solid #ddd; padding: 15px; margin: 15px 0;}
+
+/* 文本签名区域样式 */
+.signature-box{
+    width: 180px; 
+    height: 75px; 
+    border-bottom: 1px solid #333; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 16px; 
+    font-weight: bold; 
+    color: var(--primary);
+    margin-top: 10px;
+}
+
+.tenant-actions { margin-top: 15px; display: flex; gap: 10px; }
+
+/* 打印时隐藏非合同内容 */
+@media print {
+    body > .header, body > .wrap:not(#contractModal) {display: none;}
+    #contractModal {
+        position: static !important;
+        display: block !important;
+        background: none !important;
+        padding: 0;
+        width: 100%;
+    }
+    .dbox {max-width: 100% !important; box-shadow: none !important; padding: 0 !important; margin: 0;}
+    .contract-controls {display: none;} /* 隐藏编辑按钮 */
+    #contractContent {max-height: none; overflow: visible; border: none; box-shadow: none; padding: 0 !important;}
+    [contenteditable="true"]#contractContent { border: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">沪乐锦</div>
+  <div class="header-right">
+    <a class="header-link" id="openUserCenter" href="javascript:void(0)">我的租约</a>
+    <a class="header-link accent" id="openAdmin" href="javascript:void(0)">管理员入口</a>
+  </div>
+</header>
+
+<div class="wrap" id="main-view">
+  
+  <div id="hero"><h1>优选公寓，专业服务</h1></div>
+
+  <div class="notice" id="noticeBar">📢 欢迎入住沪乐锦公寓</div>
+
+  <div class="content">
+
+    <nav class="topnav" id="catTabs">
+      </nav>
+    
+    <section class="grid">
+      <section>
+        <h3>当前在租房源 (共 <span id="houseCount">0</span> 套)</h3>
+        <div class="list" id="listingList">
+          </div>
+        
+        <div id="serviceReservationContainer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+             <div class="card" style="padding: 15px; background: #fff8f2; border-left: 4px solid var(--primary);">
+                <h4>公共服务预约</h4>
+                <p class="muted">请先 <a href="javascript:void(0)" onclick="showDlg('userCenterDlg')" style="font-weight: bold;">登录我的租约</a>，方可预约 KTV、棋牌室等公共设施。</p>
+            </div>
+        </div>
+
+      </section>
+
+      <section>
+        <div class="card" style="border-left:4px solid var(--accent);">
+          <h4>📅 立即预约看房</h4>
+          <form id="appointmentForm" class="form">
+            <label><span>姓名</span><input name="name" required></label>
+            <label><span>手机</span><input name="phone" required type="tel"></label>
+            <label><span>意向房源</span>
+              <select name="house" id="aptHouseSelect" required>
+                <option value="">请选择意向房源</option>
+              </select>
+            </label>
+            <label><span>看房日期</span><input name="time" type="date" required></label>
+            <button class="btn" type="submit" style="width:100%;margin-top:10px;">提交预约</button>
+          </form>
+        </div>
+
+        <div class="hr"></div>
+        
+        <div class="card" style="text-align:center;">
+          <h4>专属客服热线</h4>
+          <p class="muted" style="font-size:1.1em; margin-bottom:10px;">
+            电话：<b style="color:var(--primary)">150 2156 0258</b>
+          </p>
+          <a href="tel:15021560258" class="btn outline" style="width:100%;text-align:center;">📞 一键致电客服</a>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <footer class="footer">
+    © 2025 沪乐锦公寓系统 - 提供专业、可靠的租房服务
+  </footer>
+</div>
+
+<div class="dialog" id="loginDlg">
+  <div class="dbox">
+    <h3>管理员登录</h3>
+    <form id="loginForm" class="form">
+      <label>账号 <input name="u" required placeholder="请输入管理员账号"></label>
+      <label>密码 <input name="p" type="password" required placeholder="请输入管理员密码"></label>
+      <button class="btn" type="submit">登录</button>
+      <button class="btn outline" type="button" onclick="hideDlg('loginDlg')">取消</button>
+      <div class="muted" style="margin-top:10px;">* 请输入您设置的管理员账号和密码</div>
+    </form>
+  </div>
+</div>
+
+<div class="dialog" id="contractModal">
+    <div class="dbox" style="max-width:900px; width:95%; padding: 0;">
+        <div class="contract-controls" style="padding: 20px; border-bottom: 1px solid var(--border); background: #f8f8f8;">
+            <h3 style="margin: 0; display: inline-block;">📑 租房合同模板编辑与签署</h3>
+            <button class="btn ok" onclick="saveContractTemplate()" style="float: right;">💾 保存所有修改</button>
+        </div>
+
+        <div style="display: flex;">
+            <div style="flex: 2; padding: 20px; border-right: 1px solid var(--border);">
+                <h4 style="margin-top:0;">合同内容 (可直接修改)</h4>
+                <div id="contractContent" contenteditable="true">
+                    </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn accent" onclick="promptContractPrint()">📄 打印 / 生成PDF</button>
+                    <button class="btn danger" onclick="hideDlg('contractModal')">关闭</button>
+                </div>
+            </div>
+
+            <div style="flex: 1; padding: 20px; background: var(--bg);">
+                <h4>📝 合同关键字段</h4>
+                <form id="contractTemplateForm" class="form">
+                    <label><span>合同名称</span><input name="name" type="text" required></label>
+                    <label><span>月租 (¥)</span><input name="price" type="number" required></label>
+                    <label><span>押金 (¥)</span><input name="deposit" type="number" required></label>
+                    <label><span>物业费</span><input name="mgmtFee" type="text" required></label>
+                </form>
+
+                <div class="hr"></div>
+
+                <h4>🖊️ 甲方（房东/管理员）签名</h4>
+                <p class="muted" style="margin-bottom: 5px;">请输入房东/管理员姓名</p>
+                <input type="text" id="signatureTextInput" placeholder="打字输入房东姓名" style="width:100%; padding: 10px; border: 2px solid var(--accent); border-radius: 6px;">
+                <button class="btn ok" onclick="saveTypedSignature()" style="width: 100%; margin-top: 10px;">确认并保存文本签名</button>
+                <p class="muted" style="font-size: 12px; margin-top: 10px;">* 电子签名已改为文本输入方式。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dialog" id="houseModal">
+  <div class="dbox" style="max-width:600px;">
+    <h3 id="houseModalTitle">编辑房源</h3>
+    <form id="houseForm" class="form">
+      <input type="hidden" name="id" id="houseId">
+      <label><span>房源名称</span><input type="text" name="title" required></label>
+      <label><span>所属分类</span>
+        <select name="category" required>
+          <option value="云飞公寓">云飞公寓</option><option value="白马公寓">白马公寓</option>
+          <option value="别墅">别墅</option><option value="沪乐锦公寓">沪乐锦公寓</option>
+        </select>
+      </label>
+      <label><span>月租 (¥)</span><input type="number" name="price" required></label>
+      <label><span>户型</span><input type="text" name="layout" placeholder="如：2室1厅" required></label>
+      <label><span>图片</span><input type="file" name="imgFile" accept="image/*" id="houseImgFile"></label>
+      <img id="houseImgPreview" style="display:none;width:100%;height:150px;object-fit:cover;margin:10px 0;border-radius:8px;">
+      <div style="display:flex;gap:10px;margin-top:15px;">
+        <button type="submit" class="btn ok" style="flex:1">保存/新增房源</button>
+        <button type="button" class="btn danger" onclick="hideDlg('houseModal')" style="flex:1">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="dialog" id="userCenterDlg">
+  <div class="dbox">
+    <div id="userCenter">
+      <h3 style="margin-top:0">我的租约</h3>
+      <form id="userLoginForm" class="form">
+        <label>用户名/手机号 <input name="u" required placeholder="请输入您的姓名或手机号"></label>
+        <label>密码 <input name="p" type="password" required placeholder="任意密码"></label>
+        <button class="btn" type="submit">登录租户中心</button>
+        <button class="btn outline" type="button" onclick="hideDlg('userCenterDlg')">取消</button>
+        <p class="muted" style="margin-top:10px; text-align:center;">* 仅限已在后台录入信息的租户使用</p>
+      </form>
+      <div id="rentalInfo" style="display:none">
+        <h4>欢迎您，<span id="tenantName">某租户</span>！</h4>
+        <div class="rental-info">
+          <p>🏠 **租约房源：** <span id="infoHouse"></span></p>
+          <p>💰 **星豆余额：** <span style="font-weight:bold;color:var(--ok)">120</span> 枚</p>
+          <p>📅 **合同到期：** <b id="dueDate">2026-06-25</b></p>
+          <p>⏱️ **剩余租期：** 还有 <span class="days-left" id="daysLeft">...</span> 天</p>
+        </div>
+        
+        <div class="tenant-actions">
+            <button class="btn danger" style="flex:1;" onclick="showDlg('repairModal')">🚨 提交报修申请</button>
+            <button class="btn accent" style="flex:1;" onclick="showMsgModal()">💬 一键留言/评论</button>
+        </div>
+        
+        <div id="tenantFacilityReservation">
+            </div>
+
+        <div style="display:flex;gap:10px;margin-top:15px;">
+          <a href="tel:15021560258" class="btn ok" style="flex:1;text-align:center;">一键联系客服</a>
+          <button class="btn" style="flex:1;">一键申请换租</button>
+        </div>
+        <button class="btn danger" style="width:100%;margin-top:10px;" onclick="simulateLogout()">退出登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog" id="addTenantModal">
+  <div class="dbox" style="max-width:500px;">
+    <h3>👤 新增租户信息</h3>
+    <form id="addTenantForm" class="form">
+      <label><span>姓名</span><input name="name" required></label>
+      <label><span>性别</span>
+        <select name="gender" required>
+          <option value="男">男</option>
+          <option value="女">女</option>
+          <option value="其他">其他</option>
+        </select>
+      </label>
+      <label><span>手机号</span><input name="phone" required type="tel"></label>
+      <label><span>身份证号</span><input name="idcard" required placeholder="用于租约管理"></label>
+      <label><span>入住房型</span><input name="house" required placeholder="如：云飞公寓A栋一居室"></label>
+      <label><span>月租金额 (¥)</span><input name="price" type="number" required></label> <label><span>租约开始</span><input name="start" required type="date"></label>
+      <label><span>租约结束</span><input name="end" required type="date"></label>
+      <button class="btn ok" type="submit" style="width:100%;margin-top:10px;">💾 确认录入租户</button>
+    </form>
+  </div>
+</div>
+
+<div class="dialog" id="repairModal">
+  <div class="dbox" style="max-width:450px;">
+    <h3>🚨 提交报修申请</h3>
+    <form id="repairForm" class="form">
+      <label><span>报修房源</span><input name="house" id="repairHouse" readonly></label>
+      <label><span>联系电话</span><input name="phone" id="repairPhone" type="tel" readonly></label>
+      <label><span>故障描述</span>
+        <textarea name="description" required rows="4" placeholder="请详细描述故障情况，如：卫生间马桶堵塞"></textarea>
+      </label>
+      <button class="btn danger" type="submit" style="width:100%;margin-top:10px;">提交报修</button>
+    </form>
+  </div>
+</div>
+
+<div class="dialog" id="messageModal">
+  <div class="dbox" style="max-width:450px;">
+    <h3>💬 租客一键留言</h3>
+    <form id="messageForm" class="form">
+      <label><span>您的姓名</span><input name="name" id="msgName" readonly></label>
+      <label><span>联系电话</span><input name="phone" id="msgPhone" type="tel" readonly></label>
+      <label><span>留言内容</span>
+        <textarea name="content" required rows="4" placeholder="请留下您想对管理员说的话、建议或意见"></textarea>
+      </label>
+      <button class="btn accent" type="submit" style="width:100%;margin-top:10px;">提交留言</button>
+    </form>
+  </div>
+</div>
+
+
+<div class="wrap admin-wrap" id="adminWrap">
+  <div class="content" style="margin-top:0;padding:0;background:var(--bg);">
+    <div class="card" style="border:none;box-shadow:none;">
+      <div class="header" style="color:#333;background:var(--card-bg);border-radius:12px;box-shadow:var(--shadow);">
+        <div class="brand" style="color:#333">🛠️ 后台管理系统</div>
+        <a class="header-link" href="#" id="backFront">← 返回前台</a>
+      </div>
+
+      <div class="kpis">
+        <div class="k"><div>在租房源</div><div class="n" id="kpiListings">0</div></div>
+        <div class="k"><div>合同总数</div><div class="n" id="kpiContracts">0</div></div>
+        <div class="k" style="border-left-color:var(--accent);"><div>待处理订单</div><div class="n" id="kpiOrders" style="color:var(--accent);">0</div></div>
+        <div class="k" style="border-left-color:var(--ok);"><div>总租户数</div><div class="n" id="kpiTenants" style="color:var(--ok);">0</div></div>
+      </div>
+
+      <div class="subtabs" id="adminTabs">
+        <button class="subtab active" data-p="pListings">房源管理</button>
+        <button class="subtab" data-p="pContracts">合同管理</button>
+        <button class="subtab" data-p="pOrders">服务订单 & 留言</button>
+        <button class="subtab" data-p="pTenants">租户中心 & 星豆</button>
+        <button class="subtab" data-p="pAnn">公告配置</button>
+        <button class="subtab" data-p="pStats">数据统计</button>
+      </div>
+
+      <div class="panel active" id="pListings">
+        <h3>房源列表 (在租/已租)</h3>
+        <button class="btn ok" onclick="showHouseModal('add')">➕ 新增房源录入</button>
+        <div class="table" id="tblListings"></div>
+      </div>
+
+      <div class="panel" id="pContracts">
+        <h3>电子合同管理中心</h3>
+        <button class="btn accent" onclick="openContractModal()">📑 编辑合同模板与预览</button>
+        <div class="table" id="tblContracts"></div>
+        <div class="hr"></div>
+        <h4>生成新合同</h4>
+        <form id="contractForm" class="form">
+          <label>租客姓名 <input name="name" required></label>
+          <label>身份证号 <input name="idcard" required></label>
+          <label>房源 <input name="house" required placeholder="如：云飞公寓 1201"></label>
+          <label>起止日期 <input name="period" required placeholder="2025-05-01 ~ 2026-04-30"></label>
+          <button class="btn" type="submit">生成并预览合同</button>
+        </form>
+      </div>
+
+      <div class="panel" id="pOrders">
+        <h3>待处理订单 (预约看房 & 服务 & 维修)</h3>
+        <div class="table" id="tblOrders"></div>
+        <button class="btn" style="margin-top:15px;" onclick="alert('点击服务订单后，可进行抢单/派单操作')">进入抢单中心 (模拟)</button>
+        
+        <div class="hr"></div>
+        <h4>💬 租客留言 (点击“已读”后移除)</h4>
+        <div class="table" id="tblMessages"></div>
+      </div>
+
+      <div class="panel" id="pTenants">
+        <h3>租户信息管理</h3>
+        <button class="btn ok" onclick="showDlg('addTenantModal')">➕ 新增租户录入</button>
+        
+        <h4 style="margin-top:20px;">当前租户列表 & 星豆余额 (共 <span id="tenantCount">0</span> 名)</h4>
+        <div class="table" id="tblTenants"></div>
+      </div>
+      
+      <div class="panel" id="pAnn">
+        <h3>修改网站公告</h3>
+        <form id="annForm" class="form">
+          <label>公告文案 <input name="txt" id="annInput" required placeholder="欢迎入住沪乐锦公寓"></label>
+          <button class="btn" type="submit">保存公告</button>
+        </form>
+      </div>
+
+      <div class="panel" id="pStats">
+        <h3>数据统计中心</h3>
+        <p class="muted">此处为静态模拟图表，如需实际数据统计，需后端支持。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/******** 数据层（localStorage） ********/
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){localStorage.setItem(k,JSON.stringify(v))},del(k){localStorage.removeItem(k)}};
+const DB={listings:'hj_listings',tenants:'hj_tenants',orders:'hj_orders',contracts:'hj_contracts',ann:'hj_announce', contractTpl: 'hj_contract_template', signature: 'hj_signature_text'}; // signature key changed
+// 仅用于内部校验，不再对外显示
+const ADMIN_ACCOUNTS=['15316990186','15021560258','13651780099','13917439578','15002168467','15651100141'];
+const ADMIN_PASSWORD='125811234';
+const CATEGORIES = ['云飞公寓', '白马公寓', '别墅', '沪乐锦公寓'];
+const CUSTOMER_SERVICE = '150 2156 0258';
+let LOGGED_IN_TENANT = null; 
+
+function uid(){return Math.random().toString(36).slice(2,9)}
+function fileToDataURL(file) {
+    return new Promise(r => {
+        const fr = new FileReader();
+        fr.onload = () => r(fr.result);
+        fr.readAsDataURL(file);
+    });
+}
+function getDefaultContractTemplate() {
+    return LS.get(DB.contractTpl) || {
+        name: "【沪乐锦公寓】标准租房合同",
+        price: 3500,
+        deposit: 7000,
+        mgmtFee: "已包含在租金内",
+        content: `
+            <h2>【沪乐锦公寓】标准租房合同</h2>
+            <p>合同编号：{"{{contractNo}}"}。甲方（出租方）：沪乐锦公寓管理处</p>
+            <p>乙方（承租方）：{"{{tenantName}}"}，身份证号：{"{{tenantIdcard}}"}</p>
+            <p>经甲乙双方协商一致，签订本合同，租赁以下房屋：</p>
+            
+            <div class="term-block">
+                <h4>第一条 房屋信息与租期</h4>
+                <p>1.1 房屋地址：{"{{house}}"}，租期：{"{{period}}"}。自 {"{{startDate}}"} 至 {"{{endDate}}"}。</p>
+                <p>1.2 合同名称：{"{{name}}"}</p>
+            </div>
+            
+            <div class="term-block">
+                <h4>第二条 租金及费用</h4>
+                <p>2.1 房屋月租金为人民币：¥{"{{price}}"}元整。押金为 ¥{"{{deposit}}"}元整。</p>
+                <p>2.2 物业管理费：{"{{mgmtFee}}"}。水电煤费用由乙方承担。</p>
+            </div>
+            
+            <div class="term-block">
+                <h4>第三条 签名生效</h4>
+                <p>合同一式两份，甲乙双方各执一份，自双方签字盖章之日起生效。</p>
+            </div>
+            
+            <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+                <div style="width: 45%;">
+                    <p><b>甲方（房东）签字：</b></p>
+                    <div class="signature-box" id="contractSignatureA">{{signature}}</div>
+                    <p>日期：{"{{currentDate}}"}</p>
+                </div>
+                <div style="width: 45%;">
+                    <p><b>乙方（租户）签字：</b></p>
+                    <div style="width: 180px; height: 75px; border-bottom: 1px solid #333; display: inline-block;"></div>
+                    <p>日期：{"{{currentDate}}"}</p>
+                </div>
+            </div>
+        `
+    };
+}
+
+
+function initOnce(){
+  if(!LS.get(DB.listings)){
+    LS.set(DB.listings,[
+      {id:uid(),title:"云飞公寓A栋一居室",category:"云飞公寓",price:3500,layout:"1室1厅",img:ph(1),status:'available'},
+      {id:uid(),title:"白马公寓B栋单间",category:"白马公寓",price:1800,layout:"1室",img:ph(2),status:'available'},
+      {id:uid(),title:"别墅C区豪华房",category:"别墅",price:9800,layout:"5室3厅",img:ph(3),status:'available'},
+      {id:uid(),title:"沪乐锦D栋两居室",category:"沪乐锦公寓",price:4200,layout:"2室1厅",img:ph(4),status:'rented'}, 
+    ]);
+  }
+  if(!LS.get(DB.tenants))LS.set(DB.tenants,[
+    // 租户数据增加 price 字段
+    {id:'T1',user:'张三',gender:'男',phone:'13800001111',house:'云飞公寓A栋一居室',price:3500,idcard:'310xxxxxxxxxx001',start:'2025-01-01',end:'2026-01-01',stars:120,ts:Date.now()},
+    {id:'T2',user:'李四',gender:'女',phone:'13900002222',house:'白马公寓B栋单间',price:1800,idcard:'310xxxxxxxxxx002',start:'2024-10-15',end:'2025-10-14',stars:250,ts:Date.now()}
+  ]);
+  if(!LS.get(DB.orders))LS.set(DB.orders,[
+    {id:'O1',type:'预约看房',name:'王五',phone:'150xxxx1234',house:'云飞公寓A栋',time:'2025-10-25',content:'看房',status:'待联系',ts:Date.now()},
+    {id:'O2',type:'租客留言',name:'李四',phone:'13900002222',house:'白马公寓B栋单间',content:'希望公寓能增加一个健身房！',status:'待处理',ts:Date.now()-86400000}
+  ]);
+  if(!LS.get(DB.contracts))LS.set(DB.contracts,[
+    {id:'C1',no:'HT20240423001',name:'王五',idcard:'310xxxxxx4567',house:'云飞公寓 0304',period:'2025-05-01 ~ 2026-04-30',ts:Date.now()}
+  ]);
+  if(!LS.get(DB.ann))LS.set(DB.ann,"欢迎入住沪乐锦公寓，客服电话："+CUSTOMER_SERVICE);
+  if(!LS.get(DB.contractTpl))LS.set(DB.contractTpl, getDefaultContractTemplate());
+  if(!LS.get(DB.signature))LS.set(DB.signature, '房东/管理员'); // 默认文本签名
+}
+initOnce();
+
+/******** 辅助函数 ********/
+function byId(id){return document.getElementById(id)}
+function ph(seed=1){return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="#fff5ec"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ff7f32" font-size="30">房源图片${seed}</text></svg>`)}
+function table(sel,heads,rows){
+  const h="<tr>"+heads.map(x=>`<th>${x}</th>`).join("")+"</tr>";
+  const r=(rows||[]).map(row=>"<tr>"+row.map(c=>`<td>${c}</td>`).join("")+"</tr>").join("");
+  byId(sel).innerHTML=`<table><thead>${h}</thead><tbody>${r||`<tr><td colspan="${heads.length}">暂无数据</td></tr>`}</tbody></table>`;
+}
+function showDlg(id){byId(id).style.display='flex'}
+function hideDlg(id){byId(id).style.display='none'}
+function initAdminTabs() {
+    document.querySelectorAll('#adminTabs .subtab').forEach(btn=>{
+      btn.onclick=()=>{
+        document.querySelectorAll('#adminTabs .subtab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#adminWrap .panel').forEach(p=>p.classList.remove('active'));
+        document.getElementById(btn.dataset.p).classList.add('active');
+        paintAdmin(); 
+      };
+    });
+}
+initAdminTabs();
+
+// NEW: 标记订单/留言完成并移除
+function markOrderAsCompleted(id) {
+    let orders = LS.get(DB.orders, []);
+    const order = orders.find(x => x.id === id);
+    if (!order) return;
+
+    if (confirm(`确定要将【${order.type === '租客留言' ? '留言' : '订单'}：${order.name} - ${order.content || order.house}】标记完成并从列表中移除吗？`)) {
+        const updatedOrders = orders.filter(x => x.id !== id);
+        LS.set(DB.orders, updatedOrders);
+        alert(`【${order.type}】已标记完成并移除。`);
+        paintAdmin();
+    }
+}
+
+// NEW: 删除合同
+function deleteContract(id) {
+    if (!confirm('确定要永久删除这份合同吗？此操作不可逆。')) return;
+    let contracts = LS.get(DB.contracts, []);
+    const updatedContracts = contracts.filter(c => c.id !== id);
+    LS.set(DB.contracts, updatedContracts);
+    alert('合同已删除。');
+    paintAdmin();
+}
+
+
+/******** 电子合同与签名逻辑 (已改为文本输入) ********/
+
+let signatureText = LS.get(DB.signature, '房东/管理员');
+
+// 确认签名，保存为DataURL
+window.saveTypedSignature = function() {
+    const text = byId('signatureTextInput').value.trim();
+    if (!text) {
+        return alert('请输入房东/管理员的姓名。');
+    }
+    signatureText = text;
+    LS.set(DB.signature, signatureText);
+    renderContractPreview();
+    alert('房东文本签名已保存！');
+};
+
+
+// 替换合同模板中的占位符
+function renderContractContent(data) {
+    const tpl = LS.get(DB.contractTpl);
+    let content = tpl.content;
+    const today = new Date().toLocaleDateString('zh-CN', {year: 'numeric', month: 'long', day: 'numeric'});
+    const sigText = LS.get(DB.signature) || '_______';
+
+    // 替换动态数据
+    content = content.replace(/\{\{name\}\}/g, tpl.name)
+                     .replace(/\{\{contractNo\}\}/g, data.no || 'HT-PREVIEW-001')
+                     .replace(/\{\{price\}\}/g, data.price)
+                     .replace(/\{\{deposit\}\}/g, tpl.deposit)
+                     .replace(/\{\{mgmtFee\}\}/g, tpl.mgmtFee)
+                     .replace(/\{\{house\}\}/g, data.house)
+                     .replace(/\{\{tenantName\}\}/g, data.name)
+                     .replace(/\{\{tenantIdcard\}\}/g, data.idcard)
+                     .replace(/\{\{period\}\}/g, data.period)
+                     .replace(/\{\{startDate\}\}/g, data.period.split(' ~ ')[0] || '待定')
+                     .replace(/\{\{endDate\}\}/g, data.period.split(' ~ ')[1] || '待定')
+                     .replace(/\{\{currentDate\}\}/g, today);
+    
+    // 替换签名文本
+    content = content.replace('{{signature}}', sigText);
+
+
+    byId('contractContent').innerHTML = content;
+}
+
+// 仅用于编辑模板时的预览
+function renderContractPreview() {
+    const tpl = getDefaultContractTemplate();
+    const mockData = {
+        name: '张三 (预览)',
+        idcard: '310xxxxxx0001',
+        house: '云飞公寓A栋一居室 (预览房源)',
+        period: '2025-05-01 ~ 2026-04-30',
+        price: tpl.price
+    };
+    renderContractContent(mockData);
+    
+    // 填充模板编辑表单
+    if(byId('contractTemplateForm')) {
+        byId('contractTemplateForm').name.value = tpl.name;
+        byId('contractTemplateForm').price.value = tpl.price;
+        byId('contractTemplateForm').deposit.value = tpl.deposit;
+        byId('contractTemplateForm').mgmtFee.value = tpl.mgmtFee;
+    }
+    // 填充签名文本输入框
+    byId('signatureTextInput').value = LS.get(DB.signature) || '房东/管理员';
+}
+
+// 打开合同编辑弹窗
+function openContractModal(data = null) {
+    renderContractPreview();
+    showDlg('contractModal');
+}
+
+// 保存合同模板修改
+function saveContractTemplate() {
+    const form = byId('contractTemplateForm');
+    const newContent = byId('contractContent').innerHTML;
+    
+    const newTpl = {
+        name: form.name.value,
+        price: parseFloat(form.price.value),
+        deposit: parseFloat(form.deposit.value),
+        mgmtFee: form.mgmtFee.value,
+        content: newContent // 保存可编辑区域的全部HTML内容
+    };
+    LS.set(DB.contractTpl, newTpl);
+    // 确保文本签名也被保存
+    saveTypedSignature(); 
+    renderContractPreview(); 
+    alert('合同模板已保存！合同内容、关键字段和甲方签名已更新。');
+}
+
+// 触发打印/PDF生成
+function promptContractPrint() {
+    alert('请使用浏览器弹出的“打印”功能，并将目标打印机选择为“另存为 PDF”来生成电子合同文件。');
+    window.print();
+}
+
+/******** 后台合同生成 ********/
+byId('contractForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const contractNo = "HT"+Date.now();
+  const data = {
+    no: contractNo,
+    name: fd.get('name'),
+    idcard: fd.get('idcard'),
+    house: fd.get('house'),
+    period: fd.get('period'),
+    price: LS.get(DB.contractTpl).price 
+  };
+
+  const arr=LS.get(DB.contracts,[]);
+  arr.unshift({id:uid(),...data,ts:Date.now()});
+  LS.set(DB.contracts,arr); 
+  
+  e.target.reset(); 
+  paintAdmin(); 
+  
+  // 预览生成的合同
+  renderContractContent(data);
+  alert(`合同 ${contractNo} 已生成并录入。即将打开预览，请点击【打印/生成PDF】按钮保存。`);
+  showDlg('contractModal');
+});
+
+/******** 房源管理 (新增和编辑) ********/
+async function showHouseModal(mode, id = null) {
+    const modal = byId('houseModal');
+    const form = byId('houseForm');
+    form.reset();
+    byId('houseImgPreview').style.display = 'none';
+    byId('houseId').value = '';
+
+    if (mode === 'add') {
+        byId('houseModalTitle').textContent = `新增房源`;
+        form.querySelector('button[type="submit"]').textContent = '➕ 新增房源';
+        showDlg('houseModal');
+    } else if (mode === 'edit' && id) {
+        const house = LS.get(DB.listings, []).find(h => h.id === id);
+        if (!house) {
+            alert('未找到该房源信息。');
+            return;
+        }
+        byId('houseModalTitle').textContent = `编辑房源: ${house.title}`;
+        form.querySelector('button[type="submit"]').textContent = '保存修改';
+        
+        // Populate Form
+        byId('houseId').value = house.id;
+        form.title.value = house.title;
+        form.category.value = house.category;
+        form.price.value = house.price;
+        form.layout.value = house.layout;
+        if (house.img) {
+            byId('houseImgPreview').src = house.img;
+            byId('houseImgPreview').style.display = 'block';
+        }
+        showDlg('houseModal');
+    }
+}
+byId('houseForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    let allHouses = LS.get(DB.listings, []);
+    const houseId = fd.get('id');
+    
+    let imgDataURL = byId('houseImgPreview').src.startsWith('data:') ? byId('houseImgPreview').src : ph(1); 
+    if (fd.get('imgFile').size > 0) {
+        imgDataURL = await fileToDataURL(fd.get('imgFile'));
+    }
+
+    if (houseId) {
+        // 编辑模式
+        const houseIndex = allHouses.findIndex(h => h.id === houseId);
+        if (houseIndex !== -1) {
+            allHouses[houseIndex].title = fd.get('title');
+            allHouses[houseIndex].category = fd.get('category');
+            allHouses[houseIndex].price = parseFloat(fd.get('price'));
+            allHouses[houseIndex].layout = fd.get('layout');
+            allHouses[houseIndex].img = imgDataURL;
+            alert(`房源 ${allHouses[houseIndex].title} 已更新!`);
+        }
+    } else {
+        // 新增模式
+        const newHouse = {
+            id: uid(),
+            title: fd.get('title'),
+            category: fd.get('category'),
+            price: parseFloat(fd.get('price')),
+            layout: fd.get('layout'),
+            img: imgDataURL,
+            status: 'available'
+        };
+        allHouses.unshift(newHouse);
+        alert(`房源 ${newHouse.title} 新增成功!`);
+    }
+    
+    LS.set(DB.listings, allHouses);
+    hideDlg('houseModal');
+    paintAdmin();
+    renderListing();
+});
+
+
+/******** 后台渲染 ********/
+function paintAdmin(){
+  const listings=LS.get(DB.listings,[]);
+  const tenants=LS.get(DB.tenants,[]);
+  const orders=LS.get(DB.orders,[]);
+  const contracts=LS.get(DB.contracts,[]);
+
+  // 1. KPI
+  byId('kpiListings').textContent=listings.filter(x=>x.status==='available').length;
+  byId('kpiContracts').textContent=contracts.length;
+  byId('kpiOrders').textContent=orders.filter(x=>x.status==='待处理' || x.status==='待联系').length;
+  byId('kpiTenants').textContent=tenants.length;
+  byId('tenantCount').textContent=tenants.length; 
+
+  // 2. 房源管理
+  table('tblListings',["ID","标题","分类","月租","状态","操作"], 
+    listings.map(x=>[
+        x.id, x.title, x.category, `￥${x.price}`, 
+        x.status === 'available' ? `<span style="color:${x.status === 'available' ? '#24b36b' : '#e74c3c'}">空置/可租</span>` : `<span style="color:#e74c3c">已出租</span>`,
+        `<div class="admin-actions">
+            <button class="btn outline" onclick="showHouseModal('edit','${x.id}')">编辑</button> 
+            <button class="btn ${x.status === 'available' ? 'danger' : 'ok'}" onclick="toggleHouseStatus('${x.id}')">${x.status === 'available' ? '标记已出租' : '标记可租'}</button>
+        </div>`
+    ])
+  );
+
+  // 3. 合同管理
+  table('tblContracts',["合同编号","租客","身份证号","房源","期间","操作"], 
+    contracts.map(c=>[c.no,c.name,c.idcard,c.house,c.period,
+      `<div class="admin-actions">
+          <button class="btn outline" onclick="renderContractContent({no:'${c.no}', name:'${c.name}', idcard:'${c.idcard}', house:'${c.house}', period:'${c.period}', price:'${LS.get(DB.contractTpl).price}'}); showDlg('contractModal');">预览/PDF</button>
+          <button class="btn danger" onclick="deleteContract('${c.id}')">删除</button>
+      </div>`
+    ])
+  );
+
+  // 4. 服务订单 (预约/报修/服务预约)
+  const serviceOrders = orders.filter(x => x.type !== '租客留言');
+  table('tblOrders',["类型","姓名","手机","房源/内容","时间","状态","操作"], 
+    serviceOrders.map(x=>[
+        x.type,x.name,x.phone||'N/A',x.content||x.house,x.time||new Date(x.ts).toLocaleDateString(),
+        `<span style="color:${x.status==='待处理' || x.status==='待联系' ? '#e74c3c' : '#24b36b'}">${x.status}</span>`,
+        `<button class="btn" onclick="markOrderAsCompleted('${x.id}')">处理/完成 (移除)</button>` 
+    ])
+  );
+  
+  // 4.1 租客留言 (新增独立列表)
+  const tenantMessages = orders.filter(x => x.type === '租客留言');
+  table('tblMessages',["姓名","房源","内容","时间","操作"], 
+    tenantMessages.map(x=>[
+        x.name,x.house,x.content,new Date(x.ts).toLocaleString(),
+        `<button class="btn accent" onclick="markOrderAsCompleted('${x.id}')">标记已读 (移除)</button>` 
+    ])
+  );
+
+  // 5. 租户中心 & 星豆 (已更新为用户请求的字段)
+  table('tblTenants',
+    ["名字","性别","身份证号码","入住房型","月租金额 (¥)","入住时间","星豆","操作"], 
+    tenants.map(x=>[
+        x.user,
+        x.gender,
+        x.idcard.slice(0, 6) + '******' + x.idcard.slice(-4), // 身份证号码
+        x.house, // 入住房型
+        `¥${x.price || 'N/A'}`, // 月租金额
+        x.start, // 入住时间
+        `${x.stars} 枚`,
+        `<button class="btn outline" onclick="alert('给 ${x.user} 续租/退租')">续租/退租</button>`
+    ])
+  );
+
+  // 6. 公告
+  byId('annInput').value = LS.get(DB.ann);
+}
+
+
+/******** 租户中心功能逻辑 ********/
+function updateTenantUI() {
+    const isLogged = !!LOGGED_IN_TENANT;
+    byId('openUserCenter').textContent = isLogged ? `我的租约 (${LOGGED_IN_TENANT.user})` : '我的租约';
+    const facilityContainer = byId('tenantFacilityReservation');
+    const services = [{ name: 'KTV 包厢', icon: '🎤' }, { name: '棋牌室', icon: '🀄' }, { name: '台球室', icon: '🎱' }];
+    
+    if (isLogged) {
+        facilityContainer.innerHTML = `
+            <div class="card" style="margin-top: 15px; border-left: 4px solid var(--ok);">
+                <h4>📅 公共设施预约 (租户专属)</h4>
+                <form id="serviceReservationForm" class="form">
+                    <label><span>服务项目</span><select name="service" required>${services.map(s => `<option value="${s.name}">${s.icon} ${s.name}</option>`).join('')}</select></label>
+                    <label><span>预约日期</span><input name="date" type="date" required></label>
+                    <label><span>预约时段</span><input name="time" type="time" required placeholder="如 19:00"></label>
+                    <button class="btn ok" type="submit" style="width:100%;margin-top:10px;">提交预约申请</button>
+                </form>
+            </div>
+        `;
+        byId('serviceReservationForm').addEventListener('submit', handleServiceReservation);
+    } else {
+        facilityContainer.innerHTML = '';
+    }
+}
+function handleServiceReservation(e) {
+    e.preventDefault();
+    if (!LOGGED_IN_TENANT) return alert('未登录租户中心！');
+    const fd = new FormData(e.target);
+    const orders = LS.get(DB.orders,[]);
+    orders.unshift({id: uid(),type: '服务预约',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,time: `${fd.get('date')} ${fd.get('time')}`,content: `预约 ${fd.get('service')}`,status: '待处理',ts: Date.now()});
+    LS.set(DB.orders, orders);
+    e.target.reset();
+    alert(`【${fd.get('service')}】预约已提交，请等待管理员确认！`);
+}
+function showUserRentalInfo(tenant) {
+    hideDlg('userCenterDlg');
+    showDlg('userCenterDlg');
+    byId('userLoginForm').style.display='none';
+    byId('rentalInfo').style.display='block';
+    byId('tenantName').textContent = tenant.user;
+    byId('infoHouse').textContent = tenant.house;
+    const dueDate = new Date(tenant.end); 
+    const now = new Date();
+    const diffTime = dueDate - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    byId('daysLeft').textContent = diffDays > 0 ? diffDays : '已到期';
+    byId('repairHouse').value = tenant.house;
+    byId('repairPhone').value = tenant.phone;
+    updateTenantUI(); // 刷新设施和留言按钮
+}
+function simulateLogout(){
+    LOGGED_IN_TENANT = null;
+    byId('rentalInfo').style.display='none';
+    byId('userLoginForm').style.display='block';
+    updateTenantUI();
+}
+
+// 报修申请提交 (略)
+byId('repairForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!LOGGED_IN_TENANT) return;
+    const fd = new FormData(e.target);
+    const orders = LS.get(DB.orders,[]);
+    orders.unshift({id: uid(),type: '报修请求',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,time: new Date().toLocaleString(),content: fd.get('description'),status: '待处理',ts: Date.now()});
+    LS.set(DB.orders, orders);
+    e.target.reset();
+    hideDlg('repairModal');
+    alert('报修申请已提交，维修人员将尽快联系您！');
+});
+
+// 一键留言功能 (新增)
+function showMsgModal() {
+    if (!LOGGED_IN_TENANT) return alert('请先登录租户中心！');
+    byId('msgName').value = LOGGED_IN_TENANT.user;
+    byId('msgPhone').value = LOGGED_IN_TENANT.phone;
+    showDlg('messageModal');
+}
+byId('messageForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!LOGGED_IN_TENANT) return;
+    const fd = new FormData(e.target);
+    const orders = LS.get(DB.orders,[]);
+    orders.unshift({id: uid(),type: '租客留言',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,content: fd.get('content'),status: '待处理',ts: Date.now()});
+    LS.set(DB.orders, orders);
+    e.target.reset();
+    hideDlg('messageModal');
+    alert('留言已成功提交给管理员！');
+});
+
+// 管理员登录/退出
+byId('openAdmin').onclick=()=>{showDlg('loginDlg')};
+byId('loginForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const user=fd.get('u');
+  const pwd=fd.get('p');
+  
+  if(ADMIN_ACCOUNTS.includes(user) && pwd === ADMIN_PASSWORD){
+    hideDlg('loginDlg');
+    byId('main-view').style.display='none';
+    byId('adminWrap').style.display='block';
+    window.scrollTo(0,0);
+    paintAdmin(); // 登录后刷新后台数据
+  }else alert('登录失败：账号或密码不正确');
+});
+byId('backFront').onclick=(e)=>{ 
+    e.preventDefault(); 
+    byId('main-view').style.display='block';
+    byId('adminWrap').style.display='none';
+    renderListing(); 
+};
+
+
+// 租户登录
+byId('openUserCenter').onclick=()=>{
+    showDlg('userCenterDlg');
+    if (LOGGED_IN_TENANT) {
+        showUserRentalInfo(LOGGED_IN_TENANT);
+    } else {
+        byId('rentalInfo').style.display='none';
+        byId('userLoginForm').style.display='block';
+    }
+}
+byId('userLoginForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    const inputUser = fd.get('u'); 
+    const tenants = LS.get(DB.tenants, []);
+    const foundTenant = tenants.find(t => t.user === inputUser || t.phone === inputUser);
+    if (foundTenant) {
+        LOGGED_IN_TENANT = foundTenant;
+        showUserRentalInfo(foundTenant);
+        alert(`租户中心登录成功！欢迎您，${foundTenant.user}`);
+    } else {
+        alert('登录失败：未在租户管理系统找到匹配的租户信息。请联系管理员录入。');
+        LOGGED_IN_TENANT = null;
+    }
+});
+
+
+// 初始数据加载/渲染 (房源列表)
+let currentCat=CATEGORIES[0];
+function renderListing(){
+  const all=LS.get(DB.listings,[]);
+  const availableHouses = all.filter(x => x.status === 'available');
+  const rows=availableHouses.filter(x=>x.category===currentCat);
+  const el=byId('listingList');
+  el.innerHTML=rows.map(x=>`<div class="item"><img src="${x.img||ph()}" alt=""><div class="b"><div class="title">${x.title}</div><div class="muted">${x.category} · ${x.layout||""}</div><div class="price">￥${x.price}/月</div><button class="btn outline" style="width:100%;margin-top:8px;" onclick="alert('查看房源：${x.title}')">查看详情</button></div></div>`).join('') || `<div class="muted" style="padding:10px;">该分类暂无房源或已全部出租。</div>`;
+    byId('houseCount').textContent=availableHouses.length;
+    byId('noticeBar').innerHTML = '📢 ' + LS.get(DB.ann);
+    const aptSelect = byId('aptHouseSelect');
+    aptSelect.innerHTML = '<option value="">请选择意向房源</option>' + availableHouses.map(h => `<option value="${h.title}">${h.title} (￥${h.price}/月)</option>`).join('');
+}
+function switchCategory(el, cat){
+    document.querySelectorAll('#catTabs .tab').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    currentCat=cat;
+    renderListing();
+}
+byId('catTabs').innerHTML = CATEGORIES.map((cat, i) => `<button class="tab ${i===0?'active':''}" data-cat="${cat}" onclick="switchCategory(this, '${cat}')">${cat}</button>`).join('');
+renderListing();
+updateTenantUI(); 
+
+// 其他功能 
+function toggleHouseStatus(id){
+    let allHouses=LS.get(DB.listings,[]);
+    const house = allHouses.find(h => h.id === id);
+    if(!house) return;
+    house.status = house.status === 'available' ? 'rented' : 'available';
+    LS.set(DB.listings,allHouses);
+    alert('房源状态已更新为：' + (house.status === 'rented' ? '已出租' : '空置/可租'));
+    paintAdmin();
+    renderListing();
+}
+byId('addTenantForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    let tenants = LS.get(DB.tenants, []);
+    const newTenant = {
+        id: uid(),
+        user: fd.get('name'),
+        gender: fd.get('gender'),
+        phone: fd.get('phone'),
+        house: fd.get('house'),
+        price: parseFloat(fd.get('price')), // 确保金额被读取
+        idcard: fd.get('idcard'),
+        start: fd.get('start'),
+        end: fd.get('end'),
+        stars: 0,
+        ts: Date.now()
+    };
+    tenants.unshift(newTenant);
+    LS.set(DB.tenants, tenants);
+    alert(`租户 ${newTenant.user} (房源: ${newTenant.house}) 录入成功！`);
+    e.target.reset();
+    hideDlg('addTenantModal');
+    paintAdmin();
+});
+byId('annForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const v=new FormData(e.target).get('txt')||"欢迎入住沪乐锦公寓";
+  LS.set(DB.ann,v); byId('noticeBar').innerHTML='📢 ' + v; alert('公告已保存');
+});
+
+// 全局函数声明，确保HTML onclick可以调用
+window.showDlg=showDlg;
+window.hideDlg=hideDlg;
+window.switchCategory=switchCategory;
+window.showHouseModal=showHouseModal;
+window.toggleHouseStatus=toggleHouseStatus;
+window.openContractModal=openContractModal;
+window.saveContractTemplate=saveContractTemplate;
+window.promptContractPrint=promptContractPrint;
+window.simulateLogout=simulateLogout;
+window.showMsgModal=showMsgModal;
+window.markOrderAsCompleted=markOrderAsCompleted;
+window.deleteContract=deleteContract;
+window.saveTypedSignature=saveTypedSignature; // NEW: 文本签名保存函数
+
+</script>
+</body>
+</html>
