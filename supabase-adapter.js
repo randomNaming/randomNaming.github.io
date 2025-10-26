@@ -9,19 +9,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // 初始化 Supabase 客户端
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 数据库表名映射
-const DB = {
-  listings: 'listings',
-  tenants: 'tenants', 
-  orders: 'orders',
-  contracts: 'contracts',
-  ann: 'settings',
-  contractTpl: 'settings',
-  signature: 'settings'
-};
-
 /**
  * Supabase 数据层 (替换原 localStorage LS 对象)
+ * 注意：DB 变量在 1.html 中定义，这里不需要重复定义
  */
 const LS = {
   /**
