@@ -466,10 +466,13 @@ th{background:#f8f9fa;font-weight:700;}
   </div>
 </div>
 
+<!-- Supabase SDK -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase-adapter.js"></script>
+
 <script>
-/******** 数据层（localStorage） ********/
-const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){localStorage.setItem(k,JSON.stringify(v))},del(k){localStorage.removeItem(k)}};
-const DB={listings:'hj_listings',tenants:'hj_tenants',orders:'hj_orders',contracts:'hj_contracts',ann:'hj_announce', contractTpl: 'hj_contract_template', signature: 'hj_signature_text'}; // signature key changed
+/******** 数据层（Supabase - 已通过 supabase-adapter.js 加载） ********/
+const DB={listings:'hj_listings',tenants:'hj_tenants',orders:'hj_orders',contracts:'hj_contracts',ann:'hj_announce', contractTpl: 'hj_contract_template', signature: 'hj_signature_text'};
 // 仅用于内部校验，不再对外显示
 const ADMIN_ACCOUNTS=['15316990186','15021560258','13651780099','13917439578','15002168467','15651100141'];
 const ADMIN_PASSWORD='125811234';
@@ -485,8 +488,8 @@ function fileToDataURL(file) {
         fr.readAsDataURL(file);
     });
 }
-function getDefaultContractTemplate() {
-    return LS.get(DB.contractTpl) || {
+async function getDefaultContractTemplate() {
+    return await LS.get(DB.contractTpl) || {
         name: "【沪乐锦公寓】标准租房合同",
         price: 3500,
         deposit: 7000,
@@ -531,32 +534,47 @@ function getDefaultContractTemplate() {
 }
 
 
-function initOnce(){
-  if(!LS.get(DB.listings)){
-    LS.set(DB.listings,[
+async function initOnce(){
+  const listings = await LS.get(DB.listings);
+  if(!listings || listings.length === 0){
+    await LS.set(DB.listings,[
       {id:uid(),title:"云飞公寓A栋一居室",category:"云飞公寓",price:3500,layout:"1室1厅",img:ph(1),status:'available'},
       {id:uid(),title:"白马公寓B栋单间",category:"白马公寓",price:1800,layout:"1室",img:ph(2),status:'available'},
       {id:uid(),title:"别墅C区豪华房",category:"别墅",price:9800,layout:"5室3厅",img:ph(3),status:'available'},
       {id:uid(),title:"沪乐锦D栋两居室",category:"沪乐锦公寓",price:4200,layout:"2室1厅",img:ph(4),status:'rented'}, 
     ]);
   }
-  if(!LS.get(DB.tenants))LS.set(DB.tenants,[
-    // 租户数据增加 price 字段
+  
+  const tenants = await LS.get(DB.tenants);
+  if(!tenants || tenants.length === 0) await LS.set(DB.tenants,[
     {id:'T1',user:'张三',gender:'男',phone:'13800001111',house:'云飞公寓A栋一居室',price:3500,idcard:'310xxxxxxxxxx001',start:'2025-01-01',end:'2026-01-01',stars:120,ts:Date.now()},
     {id:'T2',user:'李四',gender:'女',phone:'13900002222',house:'白马公寓B栋单间',price:1800,idcard:'310xxxxxxxxxx002',start:'2024-10-15',end:'2025-10-14',stars:250,ts:Date.now()}
   ]);
-  if(!LS.get(DB.orders))LS.set(DB.orders,[
+  
+  const orders = await LS.get(DB.orders);
+  if(!orders || orders.length === 0) await LS.set(DB.orders,[
     {id:'O1',type:'预约看房',name:'王五',phone:'150xxxx1234',house:'云飞公寓A栋',time:'2025-10-25',content:'看房',status:'待联系',ts:Date.now()},
     {id:'O2',type:'租客留言',name:'李四',phone:'13900002222',house:'白马公寓B栋单间',content:'希望公寓能增加一个健身房！',status:'待处理',ts:Date.now()-86400000}
   ]);
-  if(!LS.get(DB.contracts))LS.set(DB.contracts,[
+  
+  const contracts = await LS.get(DB.contracts);
+  if(!contracts || contracts.length === 0) await LS.set(DB.contracts,[
     {id:'C1',no:'HT20240423001',name:'王五',idcard:'310xxxxxx4567',house:'云飞公寓 0304',period:'2025-05-01 ~ 2026-04-30',ts:Date.now()}
   ]);
-  if(!LS.get(DB.ann))LS.set(DB.ann,"欢迎入住沪乐锦公寓，客服电话："+CUSTOMER_SERVICE);
-  if(!LS.get(DB.contractTpl))LS.set(DB.contractTpl, getDefaultContractTemplate());
-  if(!LS.get(DB.signature))LS.set(DB.signature, '房东/管理员'); // 默认文本签名
+  
+  if(!await LS.get(DB.ann)) await LS.set(DB.ann,"欢迎入住沪乐锦公寓，客服电话："+CUSTOMER_SERVICE);
+  if(!await LS.get(DB.contractTpl)) await LS.set(DB.contractTpl, await getDefaultContractTemplate());
+  if(!await LS.get(DB.signature)) await LS.set(DB.signature, '房东/管理员');
+  
+  console.log('✅ 数据初始化完成');
 }
-initOnce();
+
+// 页面加载后初始化
+window.addEventListener('DOMContentLoaded', async () => {
+  await initOnce();
+  await renderListing();
+  updateTenantUI();
+});
 
 /******** 辅助函数 ********/
 function byId(id){return document.getElementById(id)}
@@ -582,53 +600,58 @@ function initAdminTabs() {
 initAdminTabs();
 
 // NEW: 标记订单/留言完成并移除
-function markOrderAsCompleted(id) {
-    let orders = LS.get(DB.orders, []);
+async function markOrderAsCompleted(id) {
+    let orders = await LS.get(DB.orders, []);
     const order = orders.find(x => x.id === id);
     if (!order) return;
 
     if (confirm(`确定要将【${order.type === '租客留言' ? '留言' : '订单'}：${order.name} - ${order.content || order.house}】标记完成并从列表中移除吗？`)) {
         const updatedOrders = orders.filter(x => x.id !== id);
-        LS.set(DB.orders, updatedOrders);
+        await LS.set(DB.orders, updatedOrders);
         alert(`【${order.type}】已标记完成并移除。`);
-        paintAdmin();
+        await paintAdmin();
     }
 }
 
 // NEW: 删除合同
-function deleteContract(id) {
+async function deleteContract(id) {
     if (!confirm('确定要永久删除这份合同吗？此操作不可逆。')) return;
-    let contracts = LS.get(DB.contracts, []);
+    let contracts = await LS.get(DB.contracts, []);
     const updatedContracts = contracts.filter(c => c.id !== id);
-    LS.set(DB.contracts, updatedContracts);
+    await LS.set(DB.contracts, updatedContracts);
     alert('合同已删除。');
-    paintAdmin();
+    await paintAdmin();
 }
 
 
 /******** 电子合同与签名逻辑 (已改为文本输入) ********/
 
-let signatureText = LS.get(DB.signature, '房东/管理员');
+let signatureText = '房东/管理员';
+
+// 初始化签名
+(async () => {
+    signatureText = await LS.get(DB.signature, '房东/管理员');
+})();
 
 // 确认签名，保存为DataURL
-window.saveTypedSignature = function() {
+window.saveTypedSignature = async function() {
     const text = byId('signatureTextInput').value.trim();
     if (!text) {
         return alert('请输入房东/管理员的姓名。');
     }
     signatureText = text;
-    LS.set(DB.signature, signatureText);
-    renderContractPreview();
+    await LS.set(DB.signature, signatureText);
+    await renderContractPreview();
     alert('房东文本签名已保存！');
 };
 
 
 // 替换合同模板中的占位符
-function renderContractContent(data) {
-    const tpl = LS.get(DB.contractTpl);
+async function renderContractContent(data) {
+    const tpl = await LS.get(DB.contractTpl);
     let content = tpl.content;
     const today = new Date().toLocaleDateString('zh-CN', {year: 'numeric', month: 'long', day: 'numeric'});
-    const sigText = LS.get(DB.signature) || '_______';
+    const sigText = await LS.get(DB.signature) || '_______';
 
     // 替换动态数据
     content = content.replace(/\{\{name\}\}/g, tpl.name)
@@ -652,8 +675,8 @@ function renderContractContent(data) {
 }
 
 // 仅用于编辑模板时的预览
-function renderContractPreview() {
-    const tpl = getDefaultContractTemplate();
+async function renderContractPreview() {
+    const tpl = await getDefaultContractTemplate();
     const mockData = {
         name: '张三 (预览)',
         idcard: '310xxxxxx0001',
@@ -661,7 +684,7 @@ function renderContractPreview() {
         period: '2025-05-01 ~ 2026-04-30',
         price: tpl.price
     };
-    renderContractContent(mockData);
+    await renderContractContent(mockData);
     
     // 填充模板编辑表单
     if(byId('contractTemplateForm')) {
@@ -671,17 +694,17 @@ function renderContractPreview() {
         byId('contractTemplateForm').mgmtFee.value = tpl.mgmtFee;
     }
     // 填充签名文本输入框
-    byId('signatureTextInput').value = LS.get(DB.signature) || '房东/管理员';
+    byId('signatureTextInput').value = await LS.get(DB.signature) || '房东/管理员';
 }
 
 // 打开合同编辑弹窗
-function openContractModal(data = null) {
-    renderContractPreview();
+async function openContractModal(data = null) {
+    await renderContractPreview();
     showDlg('contractModal');
 }
 
 // 保存合同模板修改
-function saveContractTemplate() {
+async function saveContractTemplate() {
     const form = byId('contractTemplateForm');
     const newContent = byId('contractContent').innerHTML;
     
@@ -692,10 +715,10 @@ function saveContractTemplate() {
         mgmtFee: form.mgmtFee.value,
         content: newContent // 保存可编辑区域的全部HTML内容
     };
-    LS.set(DB.contractTpl, newTpl);
+    await LS.set(DB.contractTpl, newTpl);
     // 确保文本签名也被保存
-    saveTypedSignature(); 
-    renderContractPreview(); 
+    await saveTypedSignature(); 
+    await renderContractPreview(); 
     alert('合同模板已保存！合同内容、关键字段和甲方签名已更新。');
 }
 
@@ -706,28 +729,29 @@ function promptContractPrint() {
 }
 
 /******** 后台合同生成 ********/
-byId('contractForm').addEventListener('submit',e=>{
+byId('contractForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const fd=new FormData(e.target);
   const contractNo = "HT"+Date.now();
+  const tpl = await LS.get(DB.contractTpl);
   const data = {
     no: contractNo,
     name: fd.get('name'),
     idcard: fd.get('idcard'),
     house: fd.get('house'),
     period: fd.get('period'),
-    price: LS.get(DB.contractTpl).price 
+    price: tpl.price 
   };
 
-  const arr=LS.get(DB.contracts,[]);
+  const arr = await LS.get(DB.contracts,[]);
   arr.unshift({id:uid(),...data,ts:Date.now()});
-  LS.set(DB.contracts,arr); 
+  await LS.set(DB.contracts,arr); 
   
   e.target.reset(); 
-  paintAdmin(); 
+  await paintAdmin(); 
   
   // 预览生成的合同
-  renderContractContent(data);
+  await renderContractContent(data);
   alert(`合同 ${contractNo} 已生成并录入。即将打开预览，请点击【打印/生成PDF】按钮保存。`);
   showDlg('contractModal');
 });
@@ -745,7 +769,8 @@ async function showHouseModal(mode, id = null) {
         form.querySelector('button[type="submit"]').textContent = '➕ 新增房源';
         showDlg('houseModal');
     } else if (mode === 'edit' && id) {
-        const house = LS.get(DB.listings, []).find(h => h.id === id);
+        const houses = await LS.get(DB.listings, []);
+        const house = houses.find(h => h.id === id);
         if (!house) {
             alert('未找到该房源信息。');
             return;
@@ -769,7 +794,7 @@ async function showHouseModal(mode, id = null) {
 byId('houseForm').addEventListener('submit', async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    let allHouses = LS.get(DB.listings, []);
+    let allHouses = await LS.get(DB.listings, []);
     const houseId = fd.get('id');
     
     let imgDataURL = byId('houseImgPreview').src.startsWith('data:') ? byId('houseImgPreview').src : ph(1); 
@@ -803,19 +828,20 @@ byId('houseForm').addEventListener('submit', async e => {
         alert(`房源 ${newHouse.title} 新增成功!`);
     }
     
-    LS.set(DB.listings, allHouses);
+    await LS.set(DB.listings, allHouses);
     hideDlg('houseModal');
-    paintAdmin();
-    renderListing();
+    await paintAdmin();
+    await renderListing();
 });
 
 
 /******** 后台渲染 ********/
-function paintAdmin(){
-  const listings=LS.get(DB.listings,[]);
-  const tenants=LS.get(DB.tenants,[]);
-  const orders=LS.get(DB.orders,[]);
-  const contracts=LS.get(DB.contracts,[]);
+async function paintAdmin(){
+  const listings = await LS.get(DB.listings,[]);
+  const tenants = await LS.get(DB.tenants,[]);
+  const orders = await LS.get(DB.orders,[]);
+  const contracts = await LS.get(DB.contracts,[]);
+  const contractTpl = await LS.get(DB.contractTpl);
 
   // 1. KPI
   byId('kpiListings').textContent=listings.filter(x=>x.status==='available').length;
@@ -840,7 +866,7 @@ function paintAdmin(){
   table('tblContracts',["合同编号","租客","身份证号","房源","期间","操作"], 
     contracts.map(c=>[c.no,c.name,c.idcard,c.house,c.period,
       `<div class="admin-actions">
-          <button class="btn outline" onclick="renderContractContent({no:'${c.no}', name:'${c.name}', idcard:'${c.idcard}', house:'${c.house}', period:'${c.period}', price:'${LS.get(DB.contractTpl).price}'}); showDlg('contractModal');">预览/PDF</button>
+          <button class="btn outline" onclick="(async()=>{await renderContractContent({no:'${c.no}', name:'${c.name}', idcard:'${c.idcard}', house:'${c.house}', period:'${c.period}', price:${contractTpl.price}}); showDlg('contractModal');})()">预览/PDF</button>
           <button class="btn danger" onclick="deleteContract('${c.id}')">删除</button>
       </div>`
     ])
@@ -881,7 +907,7 @@ function paintAdmin(){
   );
 
   // 6. 公告
-  byId('annInput').value = LS.get(DB.ann);
+  byId('annInput').value = await LS.get(DB.ann);
 }
 
 
@@ -909,13 +935,13 @@ function updateTenantUI() {
         facilityContainer.innerHTML = '';
     }
 }
-function handleServiceReservation(e) {
+async function handleServiceReservation(e) {
     e.preventDefault();
     if (!LOGGED_IN_TENANT) return alert('未登录租户中心！');
     const fd = new FormData(e.target);
-    const orders = LS.get(DB.orders,[]);
+    const orders = await LS.get(DB.orders,[]);
     orders.unshift({id: uid(),type: '服务预约',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,time: `${fd.get('date')} ${fd.get('time')}`,content: `预约 ${fd.get('service')}`,status: '待处理',ts: Date.now()});
-    LS.set(DB.orders, orders);
+    await LS.set(DB.orders, orders);
     e.target.reset();
     alert(`【${fd.get('service')}】预约已提交，请等待管理员确认！`);
 }
@@ -943,13 +969,13 @@ function simulateLogout(){
 }
 
 // 报修申请提交 (略)
-byId('repairForm').addEventListener('submit', e => {
+byId('repairForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (!LOGGED_IN_TENANT) return;
     const fd = new FormData(e.target);
-    const orders = LS.get(DB.orders,[]);
+    const orders = await LS.get(DB.orders,[]);
     orders.unshift({id: uid(),type: '报修请求',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,time: new Date().toLocaleString(),content: fd.get('description'),status: '待处理',ts: Date.now()});
-    LS.set(DB.orders, orders);
+    await LS.set(DB.orders, orders);
     e.target.reset();
     hideDlg('repairModal');
     alert('报修申请已提交，维修人员将尽快联系您！');
@@ -962,13 +988,13 @@ function showMsgModal() {
     byId('msgPhone').value = LOGGED_IN_TENANT.phone;
     showDlg('messageModal');
 }
-byId('messageForm').addEventListener('submit', e => {
+byId('messageForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (!LOGGED_IN_TENANT) return;
     const fd = new FormData(e.target);
-    const orders = LS.get(DB.orders,[]);
+    const orders = await LS.get(DB.orders,[]);
     orders.unshift({id: uid(),type: '租客留言',name: LOGGED_IN_TENANT.user,phone: LOGGED_IN_TENANT.phone,house: LOGGED_IN_TENANT.house,content: fd.get('content'),status: '待处理',ts: Date.now()});
-    LS.set(DB.orders, orders);
+    await LS.set(DB.orders, orders);
     e.target.reset();
     hideDlg('messageModal');
     alert('留言已成功提交给管理员！');
@@ -976,7 +1002,7 @@ byId('messageForm').addEventListener('submit', e => {
 
 // 管理员登录/退出
 byId('openAdmin').onclick=()=>{showDlg('loginDlg')};
-byId('loginForm').addEventListener('submit',e=>{
+byId('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const fd=new FormData(e.target);
   const user=fd.get('u');
@@ -987,14 +1013,14 @@ byId('loginForm').addEventListener('submit',e=>{
     byId('main-view').style.display='none';
     byId('adminWrap').style.display='block';
     window.scrollTo(0,0);
-    paintAdmin(); // 登录后刷新后台数据
+    await paintAdmin(); // 登录后刷新后台数据
   }else alert('登录失败：账号或密码不正确');
 });
-byId('backFront').onclick=(e)=>{ 
+byId('backFront').onclick= async (e)=>{ 
     e.preventDefault(); 
     byId('main-view').style.display='block';
     byId('adminWrap').style.display='none';
-    renderListing(); 
+    await renderListing(); 
 };
 
 
@@ -1008,11 +1034,11 @@ byId('openUserCenter').onclick=()=>{
         byId('userLoginForm').style.display='block';
     }
 }
-byId('userLoginForm').addEventListener('submit',e=>{
+byId('userLoginForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const fd=new FormData(e.target);
     const inputUser = fd.get('u'); 
-    const tenants = LS.get(DB.tenants, []);
+    const tenants = await LS.get(DB.tenants, []);
     const foundTenant = tenants.find(t => t.user === inputUser || t.phone === inputUser);
     if (foundTenant) {
         LOGGED_IN_TENANT = foundTenant;
@@ -1027,42 +1053,40 @@ byId('userLoginForm').addEventListener('submit',e=>{
 
 // 初始数据加载/渲染 (房源列表)
 let currentCat=CATEGORIES[0];
-function renderListing(){
-  const all=LS.get(DB.listings,[]);
+async function renderListing(){
+  const all = await LS.get(DB.listings,[]);
   const availableHouses = all.filter(x => x.status === 'available');
   const rows=availableHouses.filter(x=>x.category===currentCat);
   const el=byId('listingList');
   el.innerHTML=rows.map(x=>`<div class="item"><img src="${x.img||ph()}" alt=""><div class="b"><div class="title">${x.title}</div><div class="muted">${x.category} · ${x.layout||""}</div><div class="price">￥${x.price}/月</div><button class="btn outline" style="width:100%;margin-top:8px;" onclick="alert('查看房源：${x.title}')">查看详情</button></div></div>`).join('') || `<div class="muted" style="padding:10px;">该分类暂无房源或已全部出租。</div>`;
     byId('houseCount').textContent=availableHouses.length;
-    byId('noticeBar').innerHTML = '📢 ' + LS.get(DB.ann);
+    byId('noticeBar').innerHTML = '📢 ' + await LS.get(DB.ann);
     const aptSelect = byId('aptHouseSelect');
     aptSelect.innerHTML = '<option value="">请选择意向房源</option>' + availableHouses.map(h => `<option value="${h.title}">${h.title} (￥${h.price}/月)</option>`).join('');
 }
-function switchCategory(el, cat){
+async function switchCategory(el, cat){
     document.querySelectorAll('#catTabs .tab').forEach(x=>x.classList.remove('active'));
     el.classList.add('active');
     currentCat=cat;
-    renderListing();
+    await renderListing();
 }
-byId('catTabs').innerHTML = CATEGORIES.map((cat, i) => `<button class="tab ${i===0?'active':''}" data-cat="${cat}" onclick="switchCategory(this, '${cat}')">${cat}</button>`).join('');
-renderListing();
-updateTenantUI(); 
+byId('catTabs').innerHTML = CATEGORIES.map((cat, i) => `<button class="tab ${i===0?'active':''}" data-cat="${cat}" onclick="switchCategory(this, '${cat}')">${cat}</button>`).join(''); 
 
 // 其他功能 
-function toggleHouseStatus(id){
-    let allHouses=LS.get(DB.listings,[]);
+async function toggleHouseStatus(id){
+    let allHouses = await LS.get(DB.listings,[]);
     const house = allHouses.find(h => h.id === id);
     if(!house) return;
     house.status = house.status === 'available' ? 'rented' : 'available';
-    LS.set(DB.listings,allHouses);
+    await LS.set(DB.listings,allHouses);
     alert('房源状态已更新为：' + (house.status === 'rented' ? '已出租' : '空置/可租'));
-    paintAdmin();
-    renderListing();
+    await paintAdmin();
+    await renderListing();
 }
-byId('addTenantForm').addEventListener('submit', e => {
+byId('addTenantForm').addEventListener('submit', async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    let tenants = LS.get(DB.tenants, []);
+    let tenants = await LS.get(DB.tenants, []);
     const newTenant = {
         id: uid(),
         user: fd.get('name'),
@@ -1077,16 +1101,37 @@ byId('addTenantForm').addEventListener('submit', e => {
         ts: Date.now()
     };
     tenants.unshift(newTenant);
-    LS.set(DB.tenants, tenants);
+    await LS.set(DB.tenants, tenants);
     alert(`租户 ${newTenant.user} (房源: ${newTenant.house}) 录入成功！`);
     e.target.reset();
     hideDlg('addTenantModal');
-    paintAdmin();
+    await paintAdmin();
 });
-byId('annForm').addEventListener('submit',e=>{
+byId('annForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const v=new FormData(e.target).get('txt')||"欢迎入住沪乐锦公寓";
-  LS.set(DB.ann,v); byId('noticeBar').innerHTML='📢 ' + v; alert('公告已保存');
+  await LS.set(DB.ann,v); byId('noticeBar').innerHTML='📢 ' + v; alert('公告已保存');
+});
+
+// 预约看房表单处理
+byId('appointmentForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const orders = await LS.get(DB.orders,[]);
+  orders.unshift({
+    id: uid(),
+    type: '预约看房',
+    name: fd.get('name'),
+    phone: fd.get('phone'),
+    house: fd.get('house'),
+    time: fd.get('time'),
+    content: `看房预约：${fd.get('house')}`,
+    status: '待联系',
+    ts: Date.now()
+  });
+  await LS.set(DB.orders, orders);
+  e.target.reset();
+  alert('预约已提交！我们的客服将尽快与您联系，感谢您的信任！');
 });
 
 // 全局函数声明，确保HTML onclick可以调用
